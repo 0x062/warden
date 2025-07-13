@@ -1,15 +1,10 @@
-// auto-single.js
-// Versi dengan format log [info], [+], [-]
 import axios from 'axios';
 import { ethers } from 'ethers';
 import chalk from 'chalk';
 import fs from 'fs';
-import moment from 'moment-timezone';
 import 'dotenv/config';
 
-// --- FUNGSI LOG BARU ---
 const log = (type, message) => {
-    const time = chalk.gray(`[${moment().tz('Asia/Jakarta').format('HH:mm:ss')}]`);
     let symbol;
     switch (type) {
         case 'success':
@@ -23,7 +18,8 @@ const log = (type, message) => {
             symbol = chalk.blue('[info]');
             break;
     }
-    console.log(`${time} ${symbol} ${message}`);
+    // Waktu (`time`) dihapus dari output console.log
+    console.log(`${symbol} ${message}`);
 };
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
