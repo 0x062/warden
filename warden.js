@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import fs from 'fs';
 import 'dotenv/config';
 
+// --- FUNGSI HELPER ---
 const log = (type, message) => {
     let symbol;
     switch (type) {
@@ -18,7 +19,6 @@ const log = (type, message) => {
             symbol = chalk.blue('[info]');
             break;
     }
-    // Waktu (`time`) dihapus dari output console.log
     console.log(`${symbol} ${message}`);
 };
 
@@ -30,11 +30,21 @@ const getRandomInt = (min, max) => {
 
 // --- KONFIGURASI DARI .ENV ---
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const TASK_DELAY = parseInt(process.env.DELAY_BETWEEN_TASKS_MS, 10) || 5000;
+const DELAY_MIN = parseInt(process.env.DELAY_MIN_MS, 10) || 3000;
+const DELAY_MAX = parseInt(process.env.DELAY_MAX_MS, 10) || 8000;
 const MIN_GAMES = parseInt(process.env.MIN_GAMES, 10) || 1;
 const MAX_GAMES = parseInt(process.env.MAX_GAMES, 10) || 2;
 const MIN_CHATS = parseInt(process.env.MIN_CHATS, 10) || 1;
 const MAX_CHATS = parseInt(process.env.MAX_CHATS, 10) || 2;
+
+
+// --- FUNGSI BARU UNTUK JEDA ACAK ---
+const randomTaskDelay = async () => {
+    const waitTime = getRandomInt(DELAY_MIN, DELAY_MAX);
+    log('info', `Mengambil jeda acak selama ${chalk.yellow((waitTime / 1000).toFixed(1))} detik...`);
+    await delay(waitTime);
+};
+
 
 if (!PRIVATE_KEY || !PRIVATE_KEY.startsWith('0x')) {
     log('error', 'PRIVATE_KEY tidak valid atau tidak ditemukan di file .env.');
@@ -57,8 +67,7 @@ const HEADERS = {
     'Referer': 'https://app.wardenprotocol.org/',
 };
 
-// --- FUNGSI-FUNGSI UTAMA ---
-
+// --- FUNGSI-FUNGSI UTAMA (Tidak ada perubahan) ---
 async function login() {
     log('info', `Mencoba login untuk akun: ${address}`);
     try {
@@ -66,7 +75,7 @@ async function login() {
         const nonceResponse = await axios.post(`${API_CONFIG.PRIVY_API}/api/v1/siwe/init`, { address }, { headers: privyHeaders });
         const nonce = nonceResponse.data.nonce;
         log('info', 'Berhasil mendapatkan Nonce.');
-        await delay(TASK_DELAY);
+        await randomTaskDelay();
 
         const issuedAt = new Date().toISOString();
         const message = `app.wardenprotocol.org wants you to sign in with your Ethereum account:\n${address}\n\nBy signing, you are proving you own this wallet and logging in. This does not initiate a transaction or cost any fees.\n\nURI: https://app.wardenprotocol.org\nVersion: 1\nChain ID: 1\nNonce: ${nonce}\nIssued At: ${issuedAt}\nResources:\n- https://privy.io`;
@@ -108,7 +117,7 @@ async function doAiChat(token) {
         const threadResponse = await axios.post(`${API_CONFIG.AGENTS_API}/threads`, {}, { headers: agentsHeaders });
         const threadId = threadResponse.data.thread_id;
         log('info', 'Thread chat dimulai.');
-        await delay(TASK_DELAY);
+        await randomTaskDelay();
         
         const question = questions[Math.floor(Math.random() * questions.length)];
         log('info', `Mengirim pertanyaan: ${question}`);
@@ -129,21 +138,21 @@ async function run() {
     const token = await login();
 
     if (token) {
-        await delay(TASK_DELAY);
+        await randomTaskDelay();
         await sendActivity(token, 'LOGIN', { action: "user_login" });
 
         const gameCount = getRandomInt(MIN_GAMES, MAX_GAMES);
-        log('info', `Akan bermain game sebanyak ${gameCount} kali.`);
+        log('info', `Akan bermain game sebanyak ${chalk.yellow(gameCount)} kali.`);
         for (let i = 0; i < gameCount; i++) {
-            await delay(TASK_DELAY);
+            await randomTaskDelay();
             log('info', `Mencoba bermain game (${i + 1}/${gameCount})...`);
             await sendActivity(token, 'GAME_PLAY', { action: "user_game" });
         }
 
         const chatCount = getRandomInt(MIN_CHATS, MAX_CHATS);
-        log('info', `Akan melakukan chat sebanyak ${chatCount} kali.`);
+        log('info', `Akan melakukan chat sebanyak ${chalk.yellow(chatCount)} kali.`);
         for (let i = 0; i < chatCount; i++) {
-            await delay(TASK_DELAY);
+            await randomTaskDelay();
             log('info', `Memulai sesi chat (${i + 1}/${chatCount})...`);
             await doAiChat(token);
         }
