@@ -1,3 +1,5 @@
+// auto-single.js
+// Versi final dengan random delay antar tugas.
 import axios from 'axios';
 import { ethers } from 'ethers';
 import chalk from 'chalk';
